@@ -284,7 +284,7 @@ def verify_mikron():
 # ht2crack4-compatible check_key (for self-verification)
 # =====================================================================
 
-def check_key(key, uid, enc_nR, ks):
+def check_key(key, uid, iv, ks):
     """
     Verify a key against an encrypted nonce and keystream pair.
     Replicates ht2crack4's check_key() function (lines 783-798).
@@ -295,7 +295,7 @@ def check_key(key, uid, enc_nR, ks):
 
     All values are in INTERNAL form (after rev32/hexreversetoulong parsing).
     """
-    state, lfsr = hitag2_init(key, uid, enc_nR)
+    state, lfsr = hitag2_init(key, uid, iv)
     bits, _, _ = hitag2_nstep(state, lfsr, 32)
     # Reverse bits to match C check_key's (bits >> 1) | (nstep(1) << 31) pattern
     bits = reverse_bits32(bits)
@@ -317,7 +317,7 @@ def generate_nonces(key, uid, num_nonces=16, seed=None):
         seed: random seed for reproducibility
 
     Returns:
-        list of (enc_nR, ks) tuples in internal form
+        list of (iv, ks) tuples in internal form
     """
     if seed is not None:
         rng = random.Random(seed)
@@ -327,16 +327,16 @@ def generate_nonces(key, uid, num_nonces=16, seed=None):
     pairs = []
     for _ in range(num_nonces):
         # Generate random 32-bit encrypted nonce
-        enc_nR = rng.randint(0, 0xFFFFFFFF)
+        iv = rng.randint(0, 0xFFFFFFFF)
 
         # Initialize cipher and get keystream
-        state, lfsr = hitag2_init(key, uid, enc_nR)
+        state, lfsr = hitag2_init(key, uid, iv)
         ks_raw, _, _ = hitag2_nstep(state, lfsr, 32)
         # Reverse bits to match C check_key convention:
         # first keystream bit at bit 0 (LSB)
         ks = reverse_bits32(ks_raw)
 
-        pairs.append((enc_nR, ks))
+        pairs.append((iv, ks))
 
     return pairs
 
@@ -347,14 +347,14 @@ def write_nonce_file(pairs, filename):
 
     ht2crack4 reads each line as: "XXXXXXXX YYYYYYYY"
     and parses:
-        enc_nR = rev32(hexreversetoulong(X))
+        iv = rev32(hexreversetoulong(X))
         ks     = rev32(hexreversetoulong(Y)) ^ 0xFFFFFFFF
 
     So the file contains ~ks (the authenticator = inverted keystream).
     """
     with open(filename, 'w') as f:
-        for enc_nR, ks in pairs:
-            nR_str = internal32_to_file_hex(enc_nR)
+        for iv, ks in pairs:
+            nR_str = internal32_to_file_hex(iv)
             # File contains ~ks (authenticator = inverted keystream)
             aR_str = internal32_to_file_hex(ks ^ 0xFFFFFFFF)
             f.write(f"{nR_str} {aR_str}\n")
@@ -392,8 +392,8 @@ def verify_key_format_roundtrip():
 
 def verify_generated_pairs(key, uid, pairs):
     """Verify each generated pair with check_key."""
-    for i, (enc_nR, ks) in enumerate(pairs):
-        if not check_key(key, uid, enc_nR, ks):
+    for i, (iv, ks) in enumerate(pairs):
+        if not check_key(key, uid, iv, ks):
             print(f"FAIL: pair {i} failed check_key verification")
             return False
     print(f"All {len(pairs)} nonce pairs verified with check_key: PASS")
@@ -414,10 +414,10 @@ def verify_file_roundtrip(key_str, uid_str, filename):
                 print(f"FAIL: invalid line {line_num}")
                 return False
 
-            enc_nR = rev32(hexreversetoulong(parts[0]))
+            iv = rev32(hexreversetoulong(parts[0]))
             ks = rev32(hexreversetoulong(parts[1])) ^ 0xFFFFFFFF
 
-            if not check_key(key_int, uid_int, enc_nR, ks):
+            if not check_key(key_int, uid_int, iv, ks):
                 print(f"FAIL: line {line_num} failed ht2crack4-style verification")
                 return False
 
