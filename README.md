@@ -31,7 +31,7 @@ make clean
 
 This compiles `ht2crack4` from the source files: `ht2crack4.c`, `hitagcrypto.c`, `ht2crack2utils.c`, and `utilpart.c`.
 
-## Usage
+## Usage (single attack)
 
 ### Step 1: Generate Nonce Pairs
 
@@ -109,18 +109,73 @@ EA4A1662 9C8B9E17
 
 Each line: `<IV_hex> <authenticator_hex>` (authenticator = inverted keystream)
 
+## Experimental Evaluation (multiple attacks)
+
+We reuse the original Python simulator and the `ht2crack4` implementation to **automatically run the attack multiple times** while varying key parameters such as:
+- the number of nonce pairs used (`N`),
+- the table size (`T`),
+- and the random seed (to capture probabilistic effects).
+
+This allows us to study **success rate**, **runtime** and their trade-offs in a statistically meaningful way.
+
+### Experimental Scale
+
+The main grid experiment explores:
+- 9 values of `N`: `N={4, 6, 8, 10, 12, 16, 20, 24, 32}`,
+- 6 values of `T`: `T={200000, 400000, 800000, 1200000, 2000000, 3000000}`,
+- 50 trials per configuration.
+
+This results in **2700 independent attack runs (~30h of computing)**, logged to a CSV file for post-processing and plotting.
+
+---
+
+## Running the Experiments
+
+### 1. Virtual environment (Recommended)
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Grid Experiment (N, T, trials → CSV)
+
+```bash
+python3 scripts/run_grid.py
+```
+*Output: data/grid/grid_results.csv*
+
+### 3. Plot Generation
+```bash
+python3 scripts/make_plots.py
+```
+*Output: figures/*
+
 ## Project Structure
 
 ```
-├── hitag2_simulation.py    # Python HiTag2 cipher simulation
-├── ht2crack4.c             # Main correlation attack implementation
-├── hitagcrypto.c/h         # HiTag2 crypto primitives
-├── ht2crack2utils.c/h      # Utility functions
-├── utilpart.c              # Byte-order conversion utilities
-├── util.h                  # Bit reversal macros
-├── Makefile                # Build configuration
-├── nonces.txt              # Generated nonce pairs (output)
-└── README.md               # This file
+├── hitag2_simulation.py          # Python HiTag2 cipher simulation
+├── ht2crack4.c                   # Main correlation attack implementation
+├── hitagcrypto.c/h               # HiTag2 crypto primitives
+├── ht2crack2utils.c/h            # Utility functions
+├── utilpart.c                    # Byte-order conversion utilities
+├── util.h                        # Bit reversal macros
+├── Makefile                      # Build configuration
+├── nonces.txt                    # Generated nonce pairs (output)
+│
+├── scripts/
+│   ├── run_grid.py               # Runs the full (N,T,trials) experiment grid
+│   └── make_plots.py             # Generates all figures from CSV data
+│
+├── data/
+│   └── grid/
+│       └── grid_results.csv      # Raw experimental results (=2700 runs)
+│
+├── figures/                      # Generated plots (PNG)
+│
+├── requirements.txt              # Python dependencies for experiments
+└── README.md                     # This file
 ```
 
 ## References
