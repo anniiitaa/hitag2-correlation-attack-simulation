@@ -80,7 +80,7 @@ Use the ht2crack4 tool to perform the correlation attack:
 **Table Size Recommendations:**
 - Start with `-t 500000` (~30s, may fail)
 - Use `-t 2000000` (~60s, reliable)
-- Use `-t 3000000` (~4min, high success rate)
+- Use `-t 3000000` (~1min30s, high success rate)
 
 ### Complete Example
 
