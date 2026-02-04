@@ -38,10 +38,10 @@ This compiles `ht2crack4` from the source files: `ht2crack4.c`, `hitagcrypto.c`,
 Use the Python script to generate simulated encrypted nonce/keystream pairs:
 
 ```bash
-# Basic usage (uses default key and UID)
+# Basic usage (uses default key,UID and filename)
 python3 hitag2_simulation.py
 
-# Custom key and UID with 16 nonce pairs
+# Custom key and UID with 16 nonce pairs (uses filename)
 python3 hitag2_simulation.py --key 4F4E4D494B52 --uid AABBCCDD -n 16
 
 # Specify output file
