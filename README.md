@@ -121,8 +121,8 @@ This allows us to study **success rate**, **runtime** and their trade-offs in a 
 ### Experimental Scale
 
 The main grid experiment explores:
-- 9 values of `N`: `N={4, 6, 8, 10, 12, 16, 20, 24, 32}`,
-- 6 values of `T`: `T={200000, 400000, 800000, 1200000, 2000000, 3000000}`,
+- 9 values of `N`: `N = {4, 6, 8, 10, 12, 16, 20, 24, 32}`,
+- 6 values of `T`: `T = {200000, 400000, 800000, 1200000, 2000000, 3000000}`,
 - 50 trials per configuration.
 
 This results in **2700 independent attack runs (~30h of computing)**, logged to a CSV file for post-processing and plotting.
